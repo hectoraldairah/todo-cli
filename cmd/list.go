@@ -4,7 +4,8 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/hectoraldairah/todo-cli/internal/storage"
+	"fmt"
+
 	"github.com/hectoraldairah/todo-cli/internal/task"
 	"github.com/spf13/cobra"
 )
@@ -14,11 +15,13 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List Tasks",
 	Run: func(cmd *cobra.Command, args []string) {
-		currentTasks, err := storage.LoadTask()
+		tasks, err := task.GetTasks()
+
 		if err != nil {
-			return
+			fmt.Printf("Error on getting task %v", err)
 		}
-		task.PrintTasks(currentTasks)
+
+    task.PrintTasks(tasks)
 	},
 }
 

@@ -1,42 +1,47 @@
 package storage
 
 import (
-	"encoding/json"
-	"fmt"
-	"os"
+	"database/sql"
+	"log"
 
-	"github.com/hectoraldairah/todo-cli/internal/task"
+	_ "github.com/mattn/go-sqlite3"
 )
 
-var fileName = "tasks.json"
+var db *sql.DB
 
-func LoadTask() ([]task.Task, error) {
-	if _, err := os.Stat(fileName); os.IsNotExist(err) {
-		fmt.Printf("File does not exists, new file created\n")
-		return []task.Task{}, nil
-	}
-
-	data, err := os.ReadFile(fileName)
+func InitDB() error {
+	var err error
+	db, err = sql.Open("sqlite3", "./task.db")
 
 	if err != nil {
-		return nil, err
-	}
-
-	var tasks []task.Task
-
-	err = json.Unmarshal(data, &tasks)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return tasks, nil
-}
-
-func SaveTask(tasks []task.Task) error {
-	data, err := json.Marshal(tasks)
-	if err != nil {
+		log.Fatalf("Error opening the database:  %v", err)
 		return err
 	}
-	return os.WriteFile(fileName, data, 0644)
+
+	err = createTable()
+	if err != nil {
+		log.Fatalf("Error creating the table: %v", err)
+		return err
+	}
+
+	return nil
+}
+
+func createTable() error {
+	createTaskTable := `
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      status TEXT
+    )
+  `
+	_, err := db.Exec(createTaskTable)
+	return err
+}
+
+func GetDB() *sql.DB {
+  if db == nil {
+    log.Println("Error getting the database, connection is nil")
+  }
+	return db
 }

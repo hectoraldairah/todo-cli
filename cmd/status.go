@@ -1,12 +1,13 @@
 /*
 Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-
 */
 package cmd
 
 import (
 	"fmt"
+	"strconv"
 
+	"github.com/hectoraldairah/todo-cli/internal/task"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("status called")
+    if(len(args) < 1) {
+      fmt.Printf("More args execed")
+      return
+    } 
+
+    id, _ := strconv.Atoi(args[0])
+    task.ChangeStatus(id, args[1])
 	},
 }
 

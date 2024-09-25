@@ -2,10 +2,10 @@ package task
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
+	"github.com/hectoraldairah/todo-cli/internal/storage"
 )
 
 type Status string
@@ -22,23 +22,46 @@ const (
 	Done       Status = "Done"
 )
 
-func AddTask(name string, currentTasks []Task) []Task {
-
-	task := Task{
-		ID:     len(currentTasks) + 1,
-		Name:   name,
-		Status: ToDo,
-	}
-
-	currentTasks = append(currentTasks, task)
-
-	fmt.Printf("\nTask \"%v\" was added\n", task.Name)
-
-	return currentTasks
+func AddTask(description string) error {
+	_, err := storage.GetDB().Exec("INSERT INTO tasks (description, status) values (?, ?)", description, Done)
+	return err
 }
 
-func PrintTasks(currentTasks []Task) {
-	rows := struct2Strings(currentTasks)
+func GetTasks() ([]Task, error) {
+	rows, err := storage.GetDB().Query("SELECT * FROM tasks")
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var tasks []Task
+
+	for rows.Next() {
+		var t Task
+		err = rows.Scan(&t.ID, &t.Name, &t.Status)
+
+		if err != nil {
+			return nil, fmt.Errorf("error scannig rows %v", err)
+		}
+		tasks = append(tasks, t)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating through rows: %v", err)
+	}
+
+	return tasks, nil
+}
+
+func DeleteTask(id int) error {
+	_, err := storage.GetDB().Exec("DELETE FROM tasks WHERE ID = ?", id)
+
+	return err
+}
+
+func PrintTasks(tasks []Task) {
+	rows := struct2Strings(tasks)
 	t := table.New().
 		Border(lipgloss.NormalBorder()).
 		BorderStyle(lipgloss.NewStyle().Foreground(lipgloss.Color("99"))).
@@ -48,10 +71,10 @@ func PrintTasks(currentTasks []Task) {
 	fmt.Println(t)
 }
 
-func struct2Strings(currentTasks []Task) [][]string {
+func struct2Strings(tasks []Task) [][]string {
 	var result [][]string
 
-	for _, task := range currentTasks {
+	for _, task := range tasks {
 		status := fmt.Sprintf("%v", task.Status)
 		id := fmt.Sprint(task.ID)
 		row := []string{
@@ -65,12 +88,7 @@ func struct2Strings(currentTasks []Task) [][]string {
 	return result
 }
 
-func RemoveTask(id string, currentTasks []Task) []Task {
-	convertedId, _ := strconv.Atoi(id)
-	for index, task := range currentTasks {
-		if convertedId == task.ID {
-			currentTasks = append(currentTasks[:index], currentTasks[index+1:]...)
-		}
-	}
-	return currentTasks
+func ChangeStatus(id int, newStatus string) error {
+	_, err := storage.GetDB().Exec("UPDATE tasks SET status = ? WHERE id = ?", newStatus, id)
+	return err
 }

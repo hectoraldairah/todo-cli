@@ -6,7 +6,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/hectoraldairah/todo-cli/internal/storage"
 	"github.com/hectoraldairah/todo-cli/internal/task"
 	"github.com/spf13/cobra"
 )
@@ -22,13 +21,7 @@ var addCmd = &cobra.Command{
 			return
 		}
 
-		currentData, loadErr := storage.LoadTask()
-
-		if loadErr != nil {
-			return
-		}
-
-		err := storage.SaveTask(task.AddTask(args[0], currentData))
+		err := task.AddTask(args[0])
 
 		if err != nil {
 			return

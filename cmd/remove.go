@@ -4,7 +4,9 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"github.com/hectoraldairah/todo-cli/internal/storage"
+	"fmt"
+	"strconv"
+
 	"github.com/hectoraldairah/todo-cli/internal/task"
 	"github.com/spf13/cobra"
 )
@@ -20,16 +22,19 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		currentTask, err := storage.LoadTask()
-		if err != nil {
+		if len(args) == 0 {
+			fmt.Printf("No task id for elimination")
 			return
 		}
-		currentTask = task.RemoveTask(args[0], currentTask)
-		saveErr := storage.SaveTask(currentTask)
 
-		if saveErr != nil {
-			return
+		id, _ := strconv.Atoi(args[0])
+
+		err := task.DeleteTask(id)
+
+		if err != nil {
+			fmt.Printf("Error deleting the task %v", err)
 		}
+
 	},
 }
 
